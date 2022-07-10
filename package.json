@@ -4,7 +4,9 @@
   "scripts": {
     "start": "ng serve",
     "build": "ng build",
-    "test": "ng test"
+    "test": "ng test",
+    "merge": "python3 merge.py",
+    "release": "npm run build && npm run merge"
   },
   "private": true,
   "dependencies": {
