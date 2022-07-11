@@ -1,5 +1,5 @@
 import {HttpClient} from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs';
 import {TeamInfo} from './model/team-info';
 import {Tournament} from './model/tournament';
@@ -9,9 +9,11 @@ import {Tournament} from './model/tournament';
 })
 export class ApiService {
   private baseUrl = 'https://api.curlingpanel.com';
+
   public constructor(
     private readonly httpClient: HttpClient
-  ) { }
+  ) {
+  }
 
   public getCurrentTournaments(): Observable<Tournament[]> {
     return this.httpClient.get<Tournament[]>(`${this.baseUrl}/tournaments/current/info`);

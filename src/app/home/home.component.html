@@ -1,0 +1,23 @@
+<h1>Curlingpanel API viewer</h1>
+
+<h2>Tournament selection</h2>
+<form>
+  <mat-form-field appearance="fill">
+    <mat-label>Select tournament</mat-label>
+    <mat-select [(ngModel)]="selectedTournament" (ngModelChange)="switchTournament()"
+                name="tournament">
+      <mat-option *ngFor="let tournament of tournaments" [value]="tournament">
+        {{tournament.name}}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+</form>
+
+<div *ngIf="teams">
+  <h2>Teams</h2>
+  <p>
+    {{teams.length}} Teams loaded.
+  </p>
+
+  <button mat-raised-button (click)="downloadTeams()">Download CSV</button>
+</div>
