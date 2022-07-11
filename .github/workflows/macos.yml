@@ -56,3 +56,9 @@ jobs:
 
     - name: Build the app
       run: npm run electron:build
+
+    - name: Upload macOS build
+      uses: actions/upload-artifact@v3
+      with:
+        name: api-viewer-macos
+        path: ./release/
