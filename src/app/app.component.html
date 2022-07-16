@@ -1,24 +1,218 @@
 <h1>Curlingpanel API viewer</h1>
 
-<h2>Tournament selection</h2>
-<form>
-  <mat-form-field appearance="fill">
-    <mat-label>Select tournament</mat-label>
-    <mat-select [(ngModel)]="selectedTournament" (ngModelChange)="switchTournament()"
-                name="tournament">
-      <mat-option *ngFor="let tournament of tournaments" [value]="tournament">
-        {{tournament.name}}
-      </mat-option>
-    </mat-select>
-  </mat-form-field>
-</form>
+<h2>Turnier-Auswahl</h2>
+<div class="tournament-choice">
 
-<div *ngIf="teams">
-  <h2>Teams</h2>
+  <div style="margin-right: 15px;">
+    <mat-form-field appearance="outline">
+      <mat-select [(ngModel)]="selectedLocation" name="location" disabled>
+        <mat-option *ngFor="let location of locations" [value]="location">
+          {{location.name}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
 
-  <p>
-    {{teams.length}} Teams loaded.
-  </p>
+  <div>
+    <mat-spinner *ngIf="tournaments.length === 0" [diameter]="50"></mat-spinner>
+    <mat-form-field appearance="outline" *ngIf="tournaments.length > 0">
+      <mat-label>Turnier auswählen</mat-label>
+      <mat-select [(ngModel)]="selectedTournament" (ngModelChange)="switchTournament($event)"
+                  name="tournament">
+        <mat-option *ngFor="let tournament of tournaments" [value]="tournament">
+          {{tournament.name}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+</div>
 
-  <button mat-raised-button (click)="downloadTeams()">Download CSV</button>
+<mat-spinner *ngIf="tournamentLoading"></mat-spinner>
+<div *ngIf="tournamentLoaded">
+  <mat-tab-group>
+    <mat-tab label="Teams">
+      <h2>Teams</h2>
+      <button mat-raised-button (click)="downloadTeams()">Download CSV</button>
+
+      <table mat-table [dataSource]="teams!" class="mat-elevation-z8">
+        <ng-container matColumnDef="id">
+          <th mat-header-cell *matHeaderCellDef> ID</th>
+          <td mat-cell *matCellDef="let element"> {{element.id}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="number">
+          <th mat-header-cell *matHeaderCellDef> Nummer</th>
+          <td mat-cell *matCellDef="let element"> {{element.number}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef> Name</th>
+          <td mat-cell *matCellDef="let element"> {{element.name}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="approved">
+          <th mat-header-cell *matHeaderCellDef> Bestätigt</th>
+          <td mat-cell *matCellDef="let element"> {{getDisplayBoolean(element.approved)}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="club">
+          <th mat-header-cell *matHeaderCellDef> Club</th>
+          <td mat-cell *matCellDef="let element"> {{element.club.name}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="remark">
+          <th mat-header-cell *matHeaderCellDef> Bemerkung</th>
+          <td mat-cell *matCellDef="let element"> {{element.remark}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="comment">
+          <th mat-header-cell *matHeaderCellDef> Kommentar</th>
+          <td mat-cell *matCellDef="let element"> {{element.comment}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="registrar">
+          <th mat-header-cell *matHeaderCellDef> Anmelde</th>
+          <td mat-cell *matCellDef="let element"> {{getDisplayName(element.registrar)}} </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="teamColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: teamColumns;"></tr>
+      </table>
+    </mat-tab>
+
+    <mat-tab label="Spiele" [disabled]="games!.length === 0">
+      <h2>Spiele</h2>
+      <button mat-raised-button (click)="downloadGames()">Download CSV</button>
+
+      <table mat-table [dataSource]="games!" class="mat-elevation-z8">
+        <ng-container matColumnDef="id">
+          <th mat-header-cell *matHeaderCellDef> ID</th>
+          <td mat-cell *matCellDef="let element"> {{element.id}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="number">
+          <th mat-header-cell *matHeaderCellDef> Nummer</th>
+          <td mat-cell *matCellDef="let element"> {{element.number}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef> Name</th>
+          <td mat-cell *matCellDef="let element"> {{element.name}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="startDateTime">
+          <th mat-header-cell *matHeaderCellDef> Start-Datum</th>
+          <td mat-cell *matCellDef="let element"> {{element.startDateTime}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="sheetNumber">
+          <th mat-header-cell *matHeaderCellDef> Sheet number</th>
+          <td mat-cell *matCellDef="let element"> {{element.sheetNumber}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="teamNameA">
+          <th mat-header-cell *matHeaderCellDef> Team A</th>
+          <td mat-cell *matCellDef="let element"> {{element.teamNameA}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="pointsA">
+          <th mat-header-cell *matHeaderCellDef> Punkte A</th>
+          <td mat-cell *matCellDef="let element"> {{element.pointsA}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="endsA">
+          <th mat-header-cell *matHeaderCellDef> Ends A</th>
+          <td mat-cell *matCellDef="let element"> {{element.endsA}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="stonesA">
+          <th mat-header-cell *matHeaderCellDef> Steine A </th>
+          <td mat-cell *matCellDef="let element"> {{element.stonesA}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="teamNameB">
+          <th mat-header-cell *matHeaderCellDef> Team B </th>
+          <td mat-cell *matCellDef="let element"> {{element.teamNameB}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="pointsB">
+          <th mat-header-cell *matHeaderCellDef> Punkte B </th>
+          <td mat-cell *matCellDef="let element"> {{element.pointsB}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="endsB">
+          <th mat-header-cell *matHeaderCellDef> Ends B </th>
+          <td mat-cell *matCellDef="let element"> {{element.endsB}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="stonesB">
+          <th mat-header-cell *matHeaderCellDef> Steine B </th>
+          <td mat-cell *matCellDef="let element"> {{element.stonesB}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef> Status </th>
+          <td mat-cell *matCellDef="let element"> {{element.status}} </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="gameColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: gameColumns;"></tr>
+      </table>
+
+    </mat-tab>
+    <mat-tab label="Ranglisten" [disabled]="!overallRankingPositions">
+      <h2>Ranglisten</h2>
+
+      <p>
+        Hinweis: Aktuell wird nur das "Overall"-ranking angezeigt.
+      </p>
+
+      <button mat-raised-button (click)="downloadRankings()">Download CSV</button>
+
+      <table mat-table [dataSource]="overallRankingPositions!" class="mat-elevation-z8" *ngIf="overallRankingPositions">
+        <ng-container matColumnDef="rank">
+          <th mat-header-cell *matHeaderCellDef> Rang</th>
+          <td mat-cell *matCellDef="let element"> {{element.rank}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="number">
+          <th mat-header-cell *matHeaderCellDef> Team-Nr.</th>
+          <td mat-cell *matCellDef="let element"> {{element.teamNumber}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef> Team-Name</th>
+          <td mat-cell *matCellDef="let element"> {{element.teamName}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="rankTitle">
+          <th mat-header-cell *matHeaderCellDef> Rang-Titel</th>
+          <td mat-cell *matCellDef="let element"> {{element.rankTitle}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="points">
+          <th mat-header-cell *matHeaderCellDef> Punkte</th>
+          <td mat-cell *matCellDef="let element"> {{element.points}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="ends">
+          <th mat-header-cell *matHeaderCellDef> Ends</th>
+          <td mat-cell *matCellDef="let element"> {{element.ends}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="stones">
+          <th mat-header-cell *matHeaderCellDef> Steine</th>
+          <td mat-cell *matCellDef="let element"> {{element.stones}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="gameCount">
+          <th mat-header-cell *matHeaderCellDef> Anzahl Spiele</th>
+          <td mat-cell *matCellDef="let element"> {{element.gameCount}} </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="rankingColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: rankingColumns;"></tr>
+      </table>
+    </mat-tab>
+  </mat-tab-group>
 </div>
