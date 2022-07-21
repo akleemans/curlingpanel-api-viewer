@@ -34,6 +34,8 @@
       <h2>Teams</h2>
       <button mat-raised-button (click)="downloadTeams()">Download CSV</button>
 
+      <p>Hinweis: Das CSV enthält noch mehr als die hier dargestellten Attribute.</p>
+
       <table mat-table [dataSource]="teams!" class="mat-elevation-z8">
         <ng-container matColumnDef="id">
           <th mat-header-cell *matHeaderCellDef> ID</th>
@@ -57,21 +59,11 @@
 
         <ng-container matColumnDef="club">
           <th mat-header-cell *matHeaderCellDef> Club</th>
-          <td mat-cell *matCellDef="let element"> {{element.club.name}} </td>
-        </ng-container>
-
-        <ng-container matColumnDef="remark">
-          <th mat-header-cell *matHeaderCellDef> Bemerkung</th>
-          <td mat-cell *matCellDef="let element"> {{element.remark}} </td>
-        </ng-container>
-
-        <ng-container matColumnDef="comment">
-          <th mat-header-cell *matHeaderCellDef> Kommentar</th>
-          <td mat-cell *matCellDef="let element"> {{element.comment}} </td>
+          <td mat-cell *matCellDef="let element"> {{element.club}} </td>
         </ng-container>
 
         <ng-container matColumnDef="registrar">
-          <th mat-header-cell *matHeaderCellDef> Anmelde</th>
+          <th mat-header-cell *matHeaderCellDef> Anmeldung </th>
           <td mat-cell *matCellDef="let element"> {{getDisplayName(element.registrar)}} </td>
         </ng-container>
 

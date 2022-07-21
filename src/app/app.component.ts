@@ -27,7 +27,7 @@ export class AppComponent implements OnInit {
   public games?: Game[];
   public overallRankingPositions?: RankingPosition[];
 
-  public teamColumns = ['number', 'name', 'approved', 'club', 'remark', 'comment', 'registrar'];
+  public teamColumns = ['number', 'name', 'approved', 'club', 'registrar'];
   public gameColumns = ['number', 'name', 'startDateTime', 'sheetNumber', 'teamNameA', 'pointsA', 'endsA', 'stonesA', 'teamNameB', 'pointsB', 'endsB', 'stonesB', 'status'];
   public rankingColumns = ['rank', 'teamNumber', 'teamName', 'rankTitle', 'points', 'ends', 'stones', 'gameCount'];
 
@@ -57,24 +57,38 @@ export class AppComponent implements OnInit {
   }
 
   public downloadTeams(): void {
-    const attributes: string[] = ['id', 'name', 'registrar.lastName', 'registrar.firstName',
-      'club.name', 'club.location.name', 'approved', 'number'];
+    const attributes: string[] = ['id', 'number', 'name', 'approved', 'club', 'remark', 'comment',
+      'registrar.firstName', 'registrar.lastName', 'registrar.email', 'registrar.phone', 'registrar.language',
+      'registrar.address', 'registrar.postalCode', 'registrar.city', 'players'];
     const data: string[] = []
-    data.push(attributes.join(',') + '\n')
+    data.push(attributes.join(';') + '\n')
     for (let team of this.teams ?? []) {
-      const values = attributes.map(a => this.resolve(team, a));
-      data.push(values.join(',') + '\n');
+
+      const values = attributes.map(attribute => {
+        if (attribute === 'players') {
+          return this.getPlayersString(team);
+        } else if (attribute === 'approved') {
+          return this.getDisplayBoolean(team.approved);
+        }
+        const value = this.resolve(team, attribute);
+        return value !== undefined ? value.toString() : '';
+      });
+      data.push(values.join(';') + '\n');
     }
     this.download(data, 'teams')
+  }
+
+  private getPlayersString(team: TeamInfo): string {
+    return team.players.map(p => p.firstName + ' ' + p.lastName).join(' | ')
   }
 
   public downloadGames(): void {
     const attributes: string[] = this.gameColumns;
     const data: string[] = []
-    data.push(attributes.join(',') + '\n')
+    data.push(attributes.join(';') + '\n')
     for (let team of this.games ?? []) {
       const values = attributes.map(a => this.resolve(team, a));
-      data.push(values.join(',') + '\n');
+      data.push(values.join(';') + '\n');
     }
     this.download(data, 'spiele')
   }
@@ -82,10 +96,10 @@ export class AppComponent implements OnInit {
   public downloadRankings(): void {
     const attributes: string[] = this.rankingColumns;
     const data: string[] = []
-    data.push(attributes.join(',') + '\n')
+    data.push(attributes.join(';') + '\n')
     for (let team of this.overallRankingPositions ?? []) {
       const values = attributes.map(a => this.resolve(team, a));
-      data.push(values.join(',') + '\n');
+      data.push(values.join(';') + '\n');
     }
     this.download(data, 'rangliste')
   }
