@@ -32,9 +32,10 @@
   <mat-tab-group>
     <mat-tab label="Teams">
       <h2>Teams</h2>
-      <button mat-raised-button (click)="downloadTeams()">Download CSV</button>
+      <button mat-raised-button (click)="downloadTeamsXSLX()">Excel download</button>
+      <button mat-raised-button (click)="downloadTeamsCSV()">CSV download</button>
 
-      <p>Hinweis: Das CSV enthält noch mehr als die hier dargestellten Attribute.</p>
+      <p>Hinweis: Der Export enthält noch mehr als die hier dargestellten Attribute.</p>
 
       <table mat-table [dataSource]="teams!" class="mat-elevation-z8">
         <ng-container matColumnDef="id">
@@ -74,7 +75,8 @@
 
     <mat-tab label="Spiele" [disabled]="games!.length === 0">
       <h2>Spiele</h2>
-      <button mat-raised-button (click)="downloadGames()">Download CSV</button>
+      <button mat-raised-button (click)="downloadGamesXSLX()">Excel download</button>
+      <button mat-raised-button (click)="downloadGamesCSV()">CSV download</button>
 
       <table mat-table [dataSource]="games!" class="mat-elevation-z8">
         <ng-container matColumnDef="id">
@@ -159,7 +161,8 @@
         Hinweis: Aktuell wird nur das "Overall"-ranking angezeigt.
       </p>
 
-      <button mat-raised-button (click)="downloadRankings()">Download CSV</button>
+      <button mat-raised-button (click)="downloadRankingsXSLX()">Excel download</button>
+      <button mat-raised-button (click)="downloadRankingsCSV()">CSV download</button>
 
       <table mat-table [dataSource]="overallRankingPositions!" class="mat-elevation-z8" *ngIf="overallRankingPositions">
         <ng-container matColumnDef="rank">

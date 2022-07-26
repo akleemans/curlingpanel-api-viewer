@@ -1,6 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 import * as FileSaver from 'file-saver';
 import {forkJoin} from 'rxjs';
+import * as XLSX from 'xlsx';
 import {ApiService} from './api.service';
 import {Game} from './model/game';
 import {Location} from './model/location';
@@ -31,6 +32,15 @@ export class AppComponent implements OnInit {
   public gameColumns = ['number', 'name', 'startDateTime', 'sheetNumber', 'teamNameA', 'pointsA', 'endsA', 'stonesA', 'teamNameB', 'pointsB', 'endsB', 'stonesB', 'status'];
   public rankingColumns = ['rank', 'teamNumber', 'teamName', 'rankTitle', 'points', 'ends', 'stones', 'gameCount'];
 
+  public teamColWidths = [
+    // id to Kommmentar
+    {wch: 10}, {wch: 10}, {wch: 25}, {wch: 10}, {wch: 25}, {wch: 80}, {wch: 20},
+    {wch: 15}, {wch: 15}, {wch: 20}, {wch: 15}, {wch: 10}, {wch: 20}, {wch: 10}, {wch: 15}, {wch: 100},
+  ];
+
+  private readonly CSV_DELIMITER = ';'
+  private readonly EXCEL_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
+
   public constructor(
     private readonly apiService: ApiService
   ) {
@@ -56,14 +66,16 @@ export class AppComponent implements OnInit {
     });
   }
 
-  public downloadTeams(): void {
+  public prepareTeamsData(): string[][] {
     const attributes: string[] = ['id', 'number', 'name', 'approved', 'club', 'remark', 'comment',
       'registrar.firstName', 'registrar.lastName', 'registrar.email', 'registrar.phone', 'registrar.language',
       'registrar.address', 'registrar.postalCode', 'registrar.city', 'players'];
-    const data: string[] = []
-    data.push(attributes.join(';') + '\n')
+    const displayAttributes: string[] = ['id', 'Nummer', 'Name', 'Bestätigt', 'Klub', 'Bemerkung', 'Kommentar',
+      'Vorname', 'Nachname', 'Email', 'Tel.', 'Sprache',
+      'Adresse', 'PLZ', 'Stadt', 'Spieler'];
+    const data: string[][] = [];
+    data.push(displayAttributes)
     for (let team of this.teams ?? []) {
-
       const values = attributes.map(attribute => {
         if (attribute === 'players') {
           return this.getPlayersString(team);
@@ -72,43 +84,95 @@ export class AppComponent implements OnInit {
         }
         const value = this.resolve(team, attribute);
         return value !== undefined ? value.toString() : '';
-      });
-      data.push(values.join(';') + '\n');
+      }).map(v => this.replaceSpecialChars(v));
+      data.push(values);
     }
-    this.download(data, 'teams')
+    return data;
+  }
+
+  public prepareGamesData(): string[][] {
+    const attributes: string[] = this.gameColumns;
+    const data: string[][] = [];
+    data.push(attributes)
+    for (let team of this.games ?? []) {
+      const values = attributes.map(a => this.resolve(team, a)).map(v => this.replaceSpecialChars(v));
+      data.push(values);
+    }
+    return data;
+  }
+
+  public prepareRankingsData(): string[][] {
+    const attributes: string[] = this.rankingColumns;
+    const data: string[][] = [];
+    data.push(attributes)
+    for (let team of this.overallRankingPositions ?? []) {
+      const values = attributes.map(a => this.resolve(team, a)).map(v => this.replaceSpecialChars(v));
+      data.push(values);
+    }
+    return data;
+  }
+
+  public downloadTeamsCSV(): void {
+    const data = this.prepareTeamsData();
+    this.downloadCSV(data.map(row => row.join(this.CSV_DELIMITER) + '\n'), 'teams')
+  }
+
+  public downloadGamesCSV(): void {
+    const data = this.prepareGamesData();
+    this.downloadCSV(data.map(row => row.join(this.CSV_DELIMITER) + '\n'), 'spiele')
+  }
+
+  public downloadRankingsCSV(): void {
+    const data = this.prepareRankingsData();
+    this.downloadCSV(data.map(row => row.join(this.CSV_DELIMITER) + '\n'), 'rangliste')
+  }
+
+  public downloadTeamsXSLX(): void {
+    const data = this.prepareTeamsData();
+    this.downloadXLSX(data, 'teams', this.teamColWidths);
+  }
+
+  public downloadGamesXSLX(): void {
+    const data = this.prepareGamesData();
+    this.downloadXLSX(data, 'spiele', []);
+  }
+
+  public downloadRankingsXSLX(): void {
+    const data = this.prepareRankingsData();
+    this.downloadXLSX(data, 'rangliste', []);
+  }
+
+  private replaceSpecialChars(value: string): string {
+    value = (value == null ? '' : value.toString());
+    return value.split(this.CSV_DELIMITER).join(',').split('\n').join(' | ');
   }
 
   private getPlayersString(team: TeamInfo): string {
     return team.players.map(p => p.firstName + ' ' + p.lastName).join(' | ')
   }
 
-  public downloadGames(): void {
-    const attributes: string[] = this.gameColumns;
-    const data: string[] = []
-    data.push(attributes.join(';') + '\n')
-    for (let team of this.games ?? []) {
-      const values = attributes.map(a => this.resolve(team, a));
-      data.push(values.join(';') + '\n');
-    }
-    this.download(data, 'spiele')
-  }
-
-  public downloadRankings(): void {
-    const attributes: string[] = this.rankingColumns;
-    const data: string[] = []
-    data.push(attributes.join(';') + '\n')
-    for (let team of this.overallRankingPositions ?? []) {
-      const values = attributes.map(a => this.resolve(team, a));
-      data.push(values.join(';') + '\n');
-    }
-    this.download(data, 'rangliste')
-  }
-
-  public download(data: string[], name: string): void {
+  public downloadCSV(data: string[], name: string): void {
     const blob = new Blob(data, {type: 'text/csv'});
     const fileName = this.getNormalizedTournamentName() + '-' + name + '.csv';
-    console.log('fileName:', fileName);
     FileSaver.saveAs(blob, fileName);
+  }
+
+  public downloadXLSX(json: string[][], name: string, colWidths: any[]): void {
+    const fileName = this.getNormalizedTournamentName() + '-' + name + '.xlsx';
+
+    const worksheet: XLSX.WorkSheet = XLSX.utils.json_to_sheet(json, {skipHeader: true});
+    const workbook: XLSX.WorkBook = {Sheets: {'data': worksheet}, SheetNames: ['data']};
+
+    // Set column width
+    worksheet["!cols"] = colWidths;
+
+    // Set autofilter
+    worksheet['!autofilter'] = {ref: "A1:P1"};
+
+    const excelBuffer: any = XLSX.write(workbook, {bookType: 'xlsx', type: 'array'});
+
+    const data: Blob = new Blob([excelBuffer], {type: this.EXCEL_TYPE});
+    FileSaver.saveAs(data, fileName);
   }
 
   private getNormalizedTournamentName(): string {
