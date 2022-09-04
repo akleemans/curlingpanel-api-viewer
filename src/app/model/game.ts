@@ -3,7 +3,7 @@ import {GameStatus} from './game-status';
 export interface Game {
   id: string;
   number: string;
-  startDateTime?: Date | string;
+  startDateTime: string; // or string from API
   sheetNumber: string;
   teamNameA: string;
   pointsA?: number;

@@ -1,6 +1,7 @@
 import {HttpClient} from '@angular/common/http';
 import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs';
+import {format, formatISO, parseISO} from 'date-fns';
+import {map, Observable, switchMap, toArray} from 'rxjs';
 import {Game} from './model/game';
 import {Rankings} from './model/rankings';
 import {TeamInfo} from './model/team-info';
@@ -20,7 +21,14 @@ export class ApiService {
   }
 
   public getTournaments(locationId: string): Observable<Tournament[]> {
-    return this.httpClient.get<Tournament[]>(`${this.baseUrl}?type=tournaments&id=${locationId}`);
+    return this.httpClient.get<Tournament[]>(`${this.baseUrl}?type=tournaments&id=${locationId}`).pipe(
+      switchMap(t => t),
+      map(t => {
+        t.startDate = parseISO(t.startDate as unknown as string)
+        return t;
+      }),
+      toArray()
+    );
   }
 
   public getTeams(tournamentId: string): Observable<TeamInfo[]> {
@@ -28,7 +36,14 @@ export class ApiService {
   }
 
   public getGames(tournamentId: string): Observable<Game[]> {
-    return this.httpClient.get<Game[]>(`${this.baseUrl}?type=games&id=${tournamentId}`);
+    return this.httpClient.get<Game[]>(`${this.baseUrl}?type=games&id=${tournamentId}`).pipe(
+      switchMap(games => games),
+      map(game => {
+        game.startDateTime = format(parseISO(game.startDateTime), "yyyy-MM-dd'T'HH:mm:ss");
+        return game;
+      }),
+      toArray()
+    );
   }
 
   public getRankings(tournamentId: string): Observable<Rankings> {

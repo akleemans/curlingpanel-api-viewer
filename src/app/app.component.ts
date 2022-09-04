@@ -1,4 +1,6 @@
 import {Component, OnInit} from '@angular/core';
+
+import {addYears, getMonth, getYear, isAfter, isBefore} from 'date-fns';
 import * as FileSaver from 'file-saver';
 import {forkJoin} from 'rxjs';
 import * as XLSX from 'xlsx';
@@ -10,6 +12,12 @@ import {RankingPosition} from './model/ranking-position';
 import {TeamInfo} from './model/team-info';
 import {Tournament} from './model/tournament';
 
+interface Season {
+  name: string;
+  startDate: Date;
+  endDate: Date;
+}
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -20,7 +28,11 @@ export class AppComponent implements OnInit {
   public selectedLocation: Location = this.locations[0];
 
   public tournaments: Tournament[] = [];
+  public filteredTournaments: Tournament[] = [];
   public selectedTournament?: Tournament;
+
+  public seasons: Season[] = [];
+  public selectedSeason?: Season;
 
   public tournamentLoaded = false;
   public tournamentLoading = false;
@@ -47,7 +59,44 @@ export class AppComponent implements OnInit {
   }
 
   public ngOnInit(): void {
-    this.apiService.getTournaments(this.selectedLocation.id).subscribe(t => this.tournaments = t);
+    this.apiService.getTournaments(this.selectedLocation.id).subscribe(t => {
+      this.tournaments = t.sort((a, b) => isAfter(a.startDate, b.startDate) ? -1 : 1);
+      console.log('Got tournaments:', this.tournaments);
+      this.seasons = this.getSeasons(this.tournaments);
+      this.selectedSeason = this.seasons[0];
+      this.switchSeason(this.selectedSeason);
+    });
+  }
+
+  private getSeasons(tournaments: Tournament[]): Season[] {
+    const seasons: Season[] = [];
+    tournaments.forEach(t => {
+      const monthSwitch = getMonth(t.startDate) >= 8 ? 0 : -1;
+      const year = getYear(t.startDate) + monthSwitch;
+
+      const seasonString = `Saison ${year}/${year + 1}`;
+      if (!seasons.find(s => s.name === seasonString)) {
+        const startDate = new Date(year, 8, 1);
+        seasons.push({
+          name: seasonString,
+          startDate,
+          endDate: addYears(startDate, 1)
+        })
+      }
+    });
+    return seasons;
+  }
+
+  public switchSeason(season: Season): void {
+    this.filteredTournaments = this.tournaments.filter(t => this.isInSeason(t, season))
+    .sort((a, b) => a.name < b.name ? -1 : 1);
+  }
+
+  private isInSeason(tournament: Tournament, season: Season | undefined): boolean {
+    if (!season) {
+      return false;
+    }
+    return isAfter(tournament.startDate, season.startDate) && isBefore(tournament.startDate, season.endDate);
   }
 
   public switchTournament(tournament: Tournament): void {

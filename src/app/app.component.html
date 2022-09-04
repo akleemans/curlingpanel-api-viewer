@@ -3,7 +3,7 @@
 <h2>Turnier-Auswahl</h2>
 <div class="tournament-choice">
 
-  <div style="margin-right: 15px;">
+  <div>
     <mat-form-field appearance="outline">
       <mat-select [(ngModel)]="selectedLocation" name="location" disabled>
         <mat-option *ngFor="let location of locations" [value]="location">
@@ -16,10 +16,22 @@
   <div>
     <mat-spinner *ngIf="tournaments.length === 0" [diameter]="50"></mat-spinner>
     <mat-form-field appearance="outline" *ngIf="tournaments.length > 0">
+      <mat-label>Saison auswählen</mat-label>
+      <mat-select [(ngModel)]="selectedSeason" (ngModelChange)="switchSeason($event)"
+                  name="saison">
+        <mat-option *ngFor="let season of seasons" [value]="season">
+          {{season.name}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <div>
+    <mat-form-field appearance="outline" *ngIf="tournaments.length > 0">
       <mat-label>Turnier auswählen</mat-label>
       <mat-select [(ngModel)]="selectedTournament" (ngModelChange)="switchTournament($event)"
                   name="tournament">
-        <mat-option *ngFor="let tournament of tournaments" [value]="tournament">
+        <mat-option *ngFor="let tournament of filteredTournaments" [value]="tournament">
           {{tournament.name}}
         </mat-option>
       </mat-select>

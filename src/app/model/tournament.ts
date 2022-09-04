@@ -10,7 +10,7 @@ export interface Tournament {
   showInList: number;
   tournamentType: TournamentType;
   // userId: string;
-  startDate: string | Date;
+  startDate: Date; // string | Date
   endDate: string | Date;
   // registerStatus: number;
   clubName: string;
