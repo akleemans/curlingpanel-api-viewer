@@ -1,6 +1,6 @@
 import {Ranking} from './ranking';
 
 export interface Rankings {
-  overall: Ranking;
+  overall: Ranking | null;
   groups: Ranking[];
 }

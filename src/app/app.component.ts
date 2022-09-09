@@ -109,7 +109,7 @@ export class AppComponent implements OnInit {
     }).subscribe(results => {
       this.teams = results.teams.sort((a, b) => +a.number - +b.number);
       this.games = results.games.sort((a, b) => +a.number - +b.number);
-      this.overallRankingPositions = results.rankings?.overall.positions.sort((a, b) => +a.rank - +b.rank);
+      this.overallRankingPositions = results.rankings?.overall?.positions.sort((a, b) => +a.rank - +b.rank);
       this.tournamentLoading = false;
       this.tournamentLoaded = true;
     });
