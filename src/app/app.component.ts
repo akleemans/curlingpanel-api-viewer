@@ -107,7 +107,8 @@ export class AppComponent implements OnInit {
       games: this.apiService.getGames(tournament.id),
       rankings: this.apiService.getRankings(tournament.id)
     }).subscribe(results => {
-      this.teams = results.teams.sort((a, b) => +a.number - +b.number);
+      console.log('results:', results);
+      this.teams = (results.teams ?? []).sort((a, b) => +a.number - +b.number);
       this.games = results.games.sort((a, b) => +a.number - +b.number);
       this.overallRankingPositions = results.rankings?.overall?.positions.sort((a, b) => +a.rank - +b.rank);
       this.tournamentLoading = false;
