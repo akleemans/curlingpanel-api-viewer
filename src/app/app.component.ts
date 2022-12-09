@@ -198,7 +198,13 @@ export class AppComponent implements OnInit {
   }
 
   private getPlayersString(team: TeamInfo): string {
-    return team.players.map(p => p.firstName + ' ' + p.lastName).join(' | ')
+    return team.players.map(p => {
+      let name = p.firstName + ' ' + p.lastName;
+      if (p.role) {
+        name += ' (' + p.role + ')';
+      }
+      return name;
+    }).join(' | ')
   }
 
   public downloadCSV(data: string[], name: string): void {
