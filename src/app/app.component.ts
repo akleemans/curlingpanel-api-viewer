@@ -199,12 +199,12 @@ export class AppComponent implements OnInit {
 
   private getPlayersString(team: TeamInfo): string {
     return team.players.map(p => {
-      let name = p.firstName + ' ' + p.lastName;
+      let name = (p.firstName ?? '') + ' ' + (p.lastName ?? '');
       if (p.role) {
         name += ' (' + p.role + ')';
       }
       return name;
-    }).join(' | ')
+    }).filter(n => n.trim().length > 0).join(' | ')
   }
 
   public downloadCSV(data: string[], name: string): void {
