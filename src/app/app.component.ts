@@ -118,13 +118,12 @@ export class AppComponent implements OnInit {
 
   public prepareTeamsData(): string[][] {
     const attributes: string[] = ['id', 'number', 'name', 'approved', 'club', 'remark', 'comment',
-      'registrar.firstName', 'registrar.lastName', 'registrar.email', 'registrar.phone', 'registrar.language',
-      'registrar.address', 'registrar.postalCode', 'registrar.city', 'players'];
-    const displayAttributes: string[] = ['id', 'Nummer', 'Name', 'Bestätigt', 'Klub', 'Bemerkung', 'Kommentar',
-      'Vorname', 'Nachname', 'Email', 'Tel.', 'Sprache',
-      'Adresse', 'PLZ', 'Stadt', 'Spieler'];
+      'registrar.firstName', 'registrar.lastName', 'registrar.language', 'registrar.postalCode',
+      'registrar.city', 'players'];
+    const displayAttributes: string[] = ['id', 'Nummer', 'Name', 'Bestätigt', 'Klub', 'Bemerkung',
+      'Kommentar', 'Vorname', 'Nachname', 'Sprache', 'PLZ', 'Stadt', 'Spieler'];
     const data: string[][] = [];
-    data.push(displayAttributes)
+    data.push(displayAttributes);
     for (let team of this.teams ?? []) {
       const values = attributes.map(attribute => {
         if (attribute === 'players') {
@@ -246,6 +245,9 @@ export class AppComponent implements OnInit {
   }
 
   public getDisplayName(person: Person): string {
+    if (!person) {
+      return '-';
+    }
     return person.firstName + ' ' + person.lastName;
   }
 
