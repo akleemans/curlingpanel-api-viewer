@@ -11,6 +11,7 @@ import {Person} from './model/person';
 import {RankingPosition} from './model/ranking-position';
 import {TeamInfo} from './model/team-info';
 import {Tournament} from './model/tournament';
+import {HttpClient} from "@angular/common/http";
 
 interface Season {
   name: string;
@@ -54,7 +55,8 @@ export class AppComponent implements OnInit {
   private readonly EXCEL_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
 
   public constructor(
-    private readonly apiService: ApiService
+    private readonly apiService: ApiService,
+    private readonly http: HttpClient,
   ) {
   }
 
@@ -66,6 +68,7 @@ export class AppComponent implements OnInit {
       this.selectedSeason = this.seasons[0];
       this.switchSeason(this.selectedSeason);
     });
+    this.fetchVisitorCount();
   }
 
   private getSeasons(tournaments: Tournament[]): Season[] {
@@ -89,7 +92,7 @@ export class AppComponent implements OnInit {
 
   public switchSeason(season: Season): void {
     this.filteredTournaments = this.tournaments.filter(t => this.isInSeason(t, season))
-    .sort((a, b) => a.name < b.name ? -1 : 1);
+      .sort((a, b) => a.name < b.name ? -1 : 1);
   }
 
   private isInSeason(tournament: Tournament, season: Season | undefined): boolean {
@@ -253,5 +256,10 @@ export class AppComponent implements OnInit {
 
   public getDisplayBoolean(b: boolean): string {
     return b ? 'Ja' : 'Nein';
+  }
+
+  private fetchVisitorCount(): void {
+    this.http.get('https://akleemans.pythonanywhere.com/api/visitors?project=curlingpanel-api-viewer')
+      .subscribe((visitorResponse) => console.log('Visitor count:', visitorResponse));
   }
 }
