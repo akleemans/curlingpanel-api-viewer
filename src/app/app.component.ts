@@ -11,7 +11,7 @@ import {Person} from './model/person';
 import {RankingPosition} from './model/ranking-position';
 import {TeamInfo} from './model/team-info';
 import {Tournament} from './model/tournament';
-import {HttpClient} from "@angular/common/http";
+import {HttpClient, HttpErrorResponse} from "@angular/common/http";
 
 interface Season {
   name: string;
@@ -27,6 +27,10 @@ interface Season {
 export class AppComponent implements OnInit {
   public locations: Location[] = [{name: 'Bern', id: 'f0318c85-1f6e-4e76-bea3-d24d6a9f6946'}]
   public selectedLocation: Location = this.locations[0];
+
+  public apiKey = '';
+  public tournamentsLoading = false;
+  public errorMessage?: string;
 
   public tournaments: Tournament[] = [];
   public filteredTournaments: Tournament[] = [];
@@ -61,14 +65,37 @@ export class AppComponent implements OnInit {
   }
 
   public ngOnInit(): void {
-    this.apiService.getTournaments(this.selectedLocation.id).subscribe(t => {
-      this.tournaments = t.sort((a, b) => isAfter(a.startDate, b.startDate) ? -1 : 1);
-      console.log('Got tournaments:', this.tournaments);
-      this.seasons = this.getSeasons(this.tournaments);
-      this.selectedSeason = this.seasons[0];
-      this.switchSeason(this.selectedSeason);
-    });
     this.fetchVisitorCount();
+  }
+
+  public loadTournaments(): void {
+    this.apiService.setApiKey(this.apiKey.trim());
+    this.errorMessage = undefined;
+    this.tournaments = [];
+    this.selectedTournament = undefined;
+    this.tournamentLoaded = false;
+    this.tournamentsLoading = true;
+    this.apiService.getTournaments(this.selectedLocation.id).subscribe({
+      next: t => {
+        this.tournaments = t.sort((a, b) => isAfter(a.startDate, b.startDate) ? -1 : 1);
+        console.log('Got tournaments:', this.tournaments);
+        this.seasons = this.getSeasons(this.tournaments);
+        this.selectedSeason = this.seasons[0];
+        this.switchSeason(this.selectedSeason);
+        this.tournamentsLoading = false;
+      },
+      error: (error: HttpErrorResponse) => {
+        this.errorMessage = this.getErrorMessage(error);
+        this.tournamentsLoading = false;
+      }
+    });
+  }
+
+  private getErrorMessage(error: HttpErrorResponse): string {
+    if (error.status === 401 || error.status === 403) {
+      return 'API-Key ungültig oder fehlend.';
+    }
+    return `Fehler beim Laden der Daten (Status ${error.status}).`;
   }
 
   private getSeasons(tournaments: Tournament[]): Season[] {
@@ -105,26 +132,33 @@ export class AppComponent implements OnInit {
   public switchTournament(tournament: Tournament): void {
     this.tournamentLoaded = false;
     this.tournamentLoading = true;
+    this.errorMessage = undefined;
     forkJoin({
       teams: this.apiService.getTeams(tournament.id),
       games: this.apiService.getGames(tournament.id),
       rankings: this.apiService.getRankings(tournament.id)
-    }).subscribe(results => {
-      console.log('results:', results);
-      this.teams = (results.teams ?? []).sort((a, b) => +a.number - +b.number);
-      this.games = results.games.sort((a, b) => +a.number - +b.number);
-      this.overallRankingPositions = results.rankings?.overall?.positions.sort((a, b) => +a.rank - +b.rank);
-      this.tournamentLoading = false;
-      this.tournamentLoaded = true;
+    }).subscribe({
+      next: results => {
+        console.log('results:', results);
+        this.teams = (results.teams ?? []).sort((a, b) => +a.number - +b.number);
+        this.games = results.games.sort((a, b) => +a.number - +b.number);
+        this.overallRankingPositions = results.rankings?.overall?.positions.sort((a, b) => +a.rank - +b.rank);
+        this.tournamentLoading = false;
+        this.tournamentLoaded = true;
+      },
+      error: (error: HttpErrorResponse) => {
+        this.errorMessage = this.getErrorMessage(error);
+        this.tournamentLoading = false;
+      }
     });
   }
 
   public prepareTeamsData(): string[][] {
     const attributes: string[] = ['id', 'number', 'name', 'approved', 'club', 'remark', 'comment',
-      'registrar.firstName', 'registrar.lastName', 'registrar.language', 'registrar.postalCode',
-      'registrar.city', 'players'];
-    const displayAttributes: string[] = ['id', 'Nummer', 'Name', 'Bestätigt', 'Klub', 'Bemerkung',
-      'Kommentar', 'Vorname', 'Nachname', 'Sprache', 'PLZ', 'Stadt', 'Spieler'];
+      'registrar.firstName', 'registrar.lastName', 'registrar.email', 'registrar.phone', 'registrar.language',
+      'registrar.address', 'registrar.postalCode', 'registrar.city', 'players'];
+    const displayAttributes: string[] = ['id', 'Nummer', 'Name', 'Bestätigt', 'Klub', 'Bemerkung', 'Kommentar',
+      'Vorname', 'Nachname', 'Email', 'Tel.', 'Sprache', 'Adresse', 'PLZ', 'Stadt', 'Spieler'];
     const data: string[][] = [];
     data.push(displayAttributes);
     for (let team of this.teams ?? []) {

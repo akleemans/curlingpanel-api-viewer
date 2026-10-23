@@ -1,5 +1,17 @@
 <h1>Curlingpanel API viewer</h1>
 
+<h2>API-Key</h2>
+<form class="api-key" (ngSubmit)="loadTournaments()">
+  <mat-form-field appearance="outline">
+    <mat-label>API-Key</mat-label>
+    <input matInput type="password" [(ngModel)]="apiKey" name="apiKey" autocomplete="off">
+  </mat-form-field>
+  <button mat-raised-button color="primary" type="submit" [disabled]="!apiKey.trim() || tournamentsLoading">
+    Turniere laden
+  </button>
+</form>
+<p class="error" *ngIf="errorMessage">{{errorMessage}}</p>
+
 <h2>Turnier-Auswahl</h2>
 <div class="tournament-choice">
 
@@ -14,7 +26,7 @@
   </div>
 
   <div>
-    <mat-spinner *ngIf="tournaments.length === 0" [diameter]="50"></mat-spinner>
+    <mat-spinner *ngIf="tournamentsLoading" [diameter]="50"></mat-spinner>
     <mat-form-field appearance="outline" *ngIf="tournaments.length > 0">
       <mat-label>Saison auswählen</mat-label>
       <mat-select [(ngModel)]="selectedSeason" (ngModelChange)="switchSeason($event)"
